@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+import csv
+import sys
+import json
+
+def main():
+    csv_file = "nodes.csv"
+    hosts = []
+
+    try:
+        with open(csv_file, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                hosts.append(row['ip_address'])
+    except FileNotFoundError:
+        print(json.dumps({}))
+        sys.exit(1)
+
+    inventory = {
+        "all": {
+            "hosts": hosts
+        }
+    }
+
+    print(json.dumps(inventory))
+
+if __name__ == "__main__":
+    main()

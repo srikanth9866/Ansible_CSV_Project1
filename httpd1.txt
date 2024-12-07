@@ -1,0 +1,52 @@
+---
+- name: Deploy and Manage httpd Service
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Install httpd
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+
+    - name: Start and Enable httpd Service
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Create a Custom Index Page
+      ansible.builtin.copy:
+        dest: /var/www/html/index.html
+        content: |
+          <html>
+          <head><title>Welcome</title></head>
+          <body>
+            <h1>Welcome to Srikanth's Web Server!</h1>
+          </body>
+          </html>
+        mode: '0644'
+
+    - name: Check if firewalld is installed
+      ansible.builtin.shell: command -v firewall-cmd
+      register: firewalld_check
+      changed_when: false
+      failed_when: false
+
+    - name: Open HTTP Port in Firewall (if applicable)
+      ansible.builtin.command: firewall-cmd --permanent --add-service=http
+      when: firewalld_check.rc == 0
+      ignore_errors: yes
+
+    - name: Reload Firewall
+      ansible.builtin.command: firewall-cmd --reload
+      when: firewalld_check.rc == 0
+      ignore_errors: yes
+
+    - name: Verify httpd Status
+      ansible.builtin.shell: systemctl status httpd
+      register: httpd_status
+
+    - name: Display httpd Status
+      ansible.builtin.debug:
+        msg: "{{ httpd_status.stdout }}"
